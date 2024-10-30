@@ -1,84 +1,127 @@
 import { Perf } from "r3f-perf";
-import React, { useRef, useMemo } from "react";
-import { useGLTF, Clone, OrbitControls, Float, Text } from "@react-three/drei";
-import { EffectComposer, Glitch, Noise } from "@react-three/postprocessing";
+import React from "react";
+import {
+  useGLTF,
+  OrbitControls,
+  Float,
+  Text,
+  Environment,
+  Stage,
+  PresentationControls,
+  Sparkles,
+  Stars,
+} from "@react-three/drei";
+import {
+  EffectComposer,
+  Bloom,
+  Noise,
+  Vignette,
+  DepthOfField,
+  Glitch,
+} from "@react-three/postprocessing";
 import { BlendFunction, GlitchMode } from "postprocessing";
-export default function chair() {
-  const chair = useGLTF("/chair.gltf");
+
+export default function Chair() {
+  const { nodes, materials } = useGLTF("/base_basic_pbr.glb");
+
   return (
     <>
-      <color attach="background" args={["#030202"]} />
+      {/* Set a gradient background */}
+      <color attach="background" args={["#000"]} />
       <Perf position="top-left" />
-      <OrbitControls makeDefault />
-      <EffectComposer multisampling={4}>
-        <Noise blendFunction={BlendFunction.AVERAGE} premultiply />
-        <Glitch //毛刺
-          delay={[1.5, 3.5]} // min and max glitch delay
-          duration={[0.6, 1.0]} // min and max glitch duration
-          strength={[0.3, 1.0]} // min and max glitch strength
-          mode={GlitchMode.SPORADIC} // glitch mode
-          active // turn on/off the effect (switches between "mode" prop and GlitchMode.DISABLED)
-          ratio={0.85} // Threshold for strong glitches, 0 - no weak glitches, 1 - no strong glitches.
-        />
-      </EffectComposer>
-      <Float position={[0.5, 0, 0]}>
-        <Text
-          font="./SoukouMincho-Font/FOT-MatissePro-EB.otf"
-          scale={0.5}
-          color={"#fff"}
-          direction="auto"
-          position={[2, 2, 0]}
-        >
-          萊納
-        </Text>
-        <Text
-          font="./SoukouMincho-Font/FOT-MatissePro-EB.otf"
-          scale={0.5}
-          color={"#777"}
-          direction="auto"
-          position={[2, 1.75, 0]}
-        >
-          ,
-        </Text>
-        <Text
-          font="./SoukouMincho-Font/FOT-MatissePro-EB.otf"
-          scale={0.5}
-          color={"#AF111C"}
-          position={[2.2, 1.15, 0]}
-        >
-          你坐啊！
-        </Text>
-      </Float>
-      <Float position={[-0.5, 0, 0]}>
-        <Text
-          font="./SoukouMincho-Font/FOT-MatissePro-EB.otf"
-          scale={0.5}
-          color={"#fff"}
-          direction="auto"
-          position={[-2.5, 2, 0]}
-        >
-          ライナー、
-        </Text>
-        <Text
-          font="./SoukouMincho-Font/FOT-MatissePro-EB.otf"
-          scale={0.5}
-          color={"#AF111C"}
-          position={[-2.4, 1.15, 0]}
-        >
-          座れよ。
-        </Text>
-      </Float>
 
-      <mesh
-        receiveShadow
-        position-y={-1}
-        rotation-x={-Math.PI * 0.5}
-        scale={10}
+      {/* Camera controls */}
+      <OrbitControls makeDefault enablePan={false} />
+
+      {/* Post-processing effects */}
+      <EffectComposer multisampling={4}>
+        <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.9} height={300} />
+        <Noise opacity={0.02} />
+        <Vignette eskil={false} offset={0.1} darkness={1.1} />
+      </EffectComposer>
+
+      {/* Soft lighting environment */}
+      <Environment preset="city" />
+
+      <Environment preset="night" />
+
+      <Sparkles
+        count={100}
+        scale={[10, 10, 10]}
+        size={2}
+        speed={1}
+        noise={1}
+        color={"#ffffff"}
+      />
+      <Stars
+        radius={100}
+        depth={50}
+        count={500}
+        factor={4}
+        saturation={0}
+        fade
+        speed={1}
+      />
+
+      <PresentationControls
+        global
+        config={{ mass: 2, tension: 500 }}
+        snap={{ mass: 4, tension: 1500 }}
+        rotation={[0, 0.3, 0]}
+        polar={[-Math.PI / 6, Math.PI / 6]}
+        azimuth={[-Math.PI / 4, Math.PI / 4]}
       >
-        <planeGeometry />
-        <meshStandardMaterial color="red" />
-      </mesh>
-      <Clone object={chair.scene} scale={1} position-y={-1}></Clone>
+        <Stage
+          intensity={0.15}
+          environment="studio"
+          preset="portrait"
+          shadows={{
+            type: "accumulative",
+            color: "#ffffff",
+            colorBlend: 2,
+            opacity: 2,
+          }}
+        >
+          <group dispose={null} scale={2}>
+            <mesh
+              position={[0, 3, 0]}
+              castShadow
+              receiveShadow
+              geometry={nodes.world.geometry}
+              material={materials.place_holder}
+            />
+            <mesh
+              castShadow
+              receiveShadow
+              geometry={nodes.model.geometry}
+              material={materials.place_holder}
+            ></mesh>
+          </group>
+        </Stage>
+      </PresentationControls>
+
+      <Float floatIntensity={5} rotationIntensity={2} position={[0, 2, 0]}>
+        <Text
+          font="./SoukouMincho-Font/FOT-MatissePro-EB.otf"
+          scale={1}
+          color="#fff"
+          position={[0, 3, 0]}
+          anchorX="center"
+          anchorY="middle"
+        >
+          AI 產的
+        </Text>
+        <Text
+          font="./SoukouMincho-Font/FOT-MatissePro-EB.otf"
+          scale={1}
+          color="#00ffff"
+          position={[0.2, 1.5, 0]}
+          anchorX="center"
+          anchorY="middle"
+        >
+          藍水晶
+        </Text>
+      </Float>
     </>
   );
 }
